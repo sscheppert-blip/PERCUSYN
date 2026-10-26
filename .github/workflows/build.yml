@@ -6,7 +6,7 @@ name: build
 #   gh workflow run build -f version=0.1.0
 #   (or Actions → build → Run workflow)
 #
-# Each run builds and tests AU (macOS, universal arm64 + x86_64), VST3, CLAP and the Standalone app
+# Each run builds and tests AU (macOS, Apple Silicon only), VST3, CLAP and the Standalone app
 # for macOS, Windows and Linux and publishes release v<version>.
 on:
   workflow_dispatch:
@@ -53,9 +53,8 @@ jobs:
       matrix:
         include:
           - name: macOS
-            # macos-latest (arm64) runners were not available on 2026-10-26; the Intel runner still builds universal.
-            os: macos-15-intel
-            configure: -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
+            os: macos-latest
+            configure: -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64
             targets: Percusyn_AU Percusyn_VST3 Percusyn_CLAP Percusyn_Standalone PercusynTests
             tests: build/PercusynTests_artefacts/Release/PercusynTests
           - name: Linux

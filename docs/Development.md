@@ -14,7 +14,7 @@ local-machine data, then builds and tests on all three platforms:
 
 | Platform | Formats | Notes |
 | --- | --- | --- |
-| macOS | AU, VST3, CLAP, Standalone | universal binary (arm64 + x86_64), ad-hoc signed, `auval` run |
+| macOS | AU, VST3, CLAP, Standalone | Apple Silicon (arm64) only, ad-hoc signed, `auval` run |
 | Windows | VST3, CLAP, Standalone | x64 |
 | Linux | VST3, CLAP, Standalone | x86_64, tests under `xvfb-run` |
 

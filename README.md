@@ -1,6 +1,6 @@
 # PERCUSYN
 
-Nine-voice percussion synthesizer: Closed Hat, Open Hat, Snare, Tom, Shaker, Clap, Perc, Rim and Click, each with its own Comb and Resonator stage, a 16-step sequencer, send FX, a mixer with multi-out and one-shot rendering with drag into the DAW. Built with JUCE as VST3, CLAP and Standalone for macOS, Windows and Linux, plus AU on macOS.
+Nine-voice percussion synthesizer: Closed Hat, Open Hat, Snare, Tom, Shaker, Clap, Perc, Rim and Click, each with its own Comb and Resonator stage, a 16-step sequencer, send FX, a mixer with multi-out and one-shot rendering with drag into the DAW. Built with JUCE as VST3, CLAP and Standalone for macOS (Apple Silicon), Windows and Linux (x64), plus AU on macOS.
 
 ## Features
 
@@ -19,7 +19,7 @@ Nine-voice percussion synthesizer: Closed Hat, Open Hat, Snare, Tom, Shaker, Cla
 
 ## Download
 
-Ready-built plug-ins for macOS (AU, VST3, CLAP, Standalone; universal), Windows and Linux (VST3, CLAP, Standalone) are on the [Releases](https://github.com/sscheppert-blip/PERCUSYN/releases) page. Installation folders are listed in the manual. The plug-ins are not signed; on macOS remove the download quarantine once (see the manual).
+Ready-built plug-ins for macOS (AU, VST3, CLAP, Standalone; Apple Silicon), Windows and Linux (VST3, CLAP, Standalone) are on the [Releases](https://github.com/sscheppert-blip/PERCUSYN/releases) page. Installation folders are listed in the manual. The plug-ins are not signed; on macOS remove the download quarantine once (see the manual).
 
 ## Building
 

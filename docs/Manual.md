@@ -26,7 +26,7 @@ Download the package for your system from the [Releases](https://github.com/ssch
 | --- | --- | --- |
 | Windows | VST3 | `C:\Program Files\Common Files\VST3` |
 | Windows | CLAP | `C:\Program Files\Common Files\CLAP` |
-| macOS | AU | `~/Library/Audio/Plug-Ins/Components` |
+| macOS (Apple Silicon) | AU | `~/Library/Audio/Plug-Ins/Components` |
 | macOS | VST3 | `~/Library/Audio/Plug-Ins/VST3` |
 | macOS | CLAP | `~/Library/Audio/Plug-Ins/CLAP` |
 | Linux | VST3 | `~/.vst3` |
