@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstdint>
+#include <stddef.h>
 
 namespace percusyn
 {

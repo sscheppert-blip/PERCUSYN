@@ -6,6 +6,7 @@
 #include "dsp/Types.h"
 
 #include <array>
+#include <stddef.h>
 
 namespace percusyn::dsp
 {
