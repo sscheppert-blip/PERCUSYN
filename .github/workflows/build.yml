@@ -53,7 +53,8 @@ jobs:
       matrix:
         include:
           - name: macOS
-            os: macos-latest
+            # macos-latest (arm64) runners were not available on 2026-10-26; the Intel runner still builds universal.
+            os: macos-15-intel
             configure: -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
             targets: Percusyn_AU Percusyn_VST3 Percusyn_CLAP Percusyn_Standalone PercusynTests
             tests: build/PercusynTests_artefacts/Release/PercusynTests
