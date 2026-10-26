@@ -1,0 +1,157 @@
+name: build
+
+# Builds run only on demand, to save Actions minutes (macOS counts 10x, Windows 2x).
+# The version must match VERSION in CMakeLists.txt.
+#
+#   gh workflow run build -f version=0.1.0
+#   (or Actions → build → Run workflow)
+#
+# Each run builds and tests AU (macOS, universal arm64 + x86_64), VST3, CLAP and the Standalone app
+# for macOS, Windows and Linux and publishes release v<version>.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, must match VERSION in CMakeLists.txt (creates tag v<version>)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # Cheap checks first (one Linux minute), so a bad version or a leak never starts the expensive builds.
+  scan:
+    name: Check version and scan for sensitive data
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "version must look like 0.1.0" >&2; exit 1; }
+          grep -Eq "^project\(Percusyn VERSION ${VERSION//./\\.} " CMakeLists.txt \
+            || { echo "version $VERSION does not match VERSION in CMakeLists.txt" >&2; exit 1; }
+
+      - name: Scan for credentials and local-machine data
+        run: |
+          sudo apt-get install -y ripgrep
+          ./tools/check-sensitive-data.sh
+
+  build:
+    name: ${{ matrix.name }}
+    needs: scan
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: macOS
+            os: macos-latest
+            configure: -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
+            targets: Percusyn_AU Percusyn_VST3 Percusyn_CLAP Percusyn_Standalone PercusynTests
+            tests: build/PercusynTests_artefacts/Release/PercusynTests
+          - name: Linux
+            os: ubuntu-24.04
+            configure: -G Ninja -DCMAKE_BUILD_TYPE=Release
+            targets: Percusyn_VST3 Percusyn_CLAP Percusyn_Standalone PercusynTests
+            tests: xvfb-run -a build/PercusynTests_artefacts/Release/PercusynTests
+          - name: Windows
+            os: windows-latest
+            configure: -A x64
+            targets: Percusyn_VST3 Percusyn_CLAP Percusyn_Standalone PercusynTests
+            tests: build/PercusynTests_artefacts/Release/PercusynTests.exe
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build xvfb libasound2-dev libjack-jackd2-dev \
+            libfreetype-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev \
+            libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libxi-dev \
+            libglu1-mesa-dev libegl-dev
+
+      - name: Install Ninja (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja
+
+      - name: Configure
+        shell: bash
+        run: cmake -S . -B build ${{ matrix.configure }} -DPERCUSYN_COPY_PLUGIN=OFF
+
+      - name: Build
+        run: cmake --build build --config Release --parallel --target ${{ matrix.targets }}
+
+      - name: Test
+        shell: bash
+        run: ${{ matrix.tests }}
+
+      - name: Validate AU (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R build/Percusyn_artefacts/Release/AU/PERCUSYN.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          auval -v aumu Pcsy Sbli
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p dist
+          cd build/Percusyn_artefacts/Release
+          case "${{ runner.os }}" in
+            macOS)
+              ditto -c -k --keepParent AU/PERCUSYN.component "$GITHUB_WORKSPACE/dist/PERCUSYN-macOS-AU.zip"
+              ditto -c -k --keepParent VST3/PERCUSYN.vst3 "$GITHUB_WORKSPACE/dist/PERCUSYN-macOS-VST3.zip"
+              ditto -c -k --keepParent CLAP/PERCUSYN.clap "$GITHUB_WORKSPACE/dist/PERCUSYN-macOS-CLAP.zip"
+              ditto -c -k --keepParent Standalone/PERCUSYN.app "$GITHUB_WORKSPACE/dist/PERCUSYN-macOS-Standalone.zip" ;;
+            Linux)
+              tar -czf "$GITHUB_WORKSPACE/dist/PERCUSYN-Linux-VST3.tar.gz" -C VST3 PERCUSYN.vst3
+              tar -czf "$GITHUB_WORKSPACE/dist/PERCUSYN-Linux-CLAP.tar.gz" -C CLAP PERCUSYN.clap
+              tar -czf "$GITHUB_WORKSPACE/dist/PERCUSYN-Linux-Standalone.tar.gz" -C Standalone PERCUSYN ;;
+            Windows)
+              7z a "$GITHUB_WORKSPACE/dist/PERCUSYN-Windows-VST3.zip" ./VST3/PERCUSYN.vst3
+              7z a "$GITHUB_WORKSPACE/dist/PERCUSYN-Windows-CLAP.zip" ./CLAP/PERCUSYN.clap
+              7z a "$GITHUB_WORKSPACE/dist/PERCUSYN-Windows-Standalone.zip" ./Standalone/PERCUSYN.exe ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PERCUSYN-${{ matrix.name }}
+          path: dist/*
+          retention-days: 7
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: PERCUSYN-*
+          path: release
+          merge-multiple: true
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          ls -l release
+          gh release create "v$VERSION" release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "PERCUSYN $VERSION" \
+            --generate-notes

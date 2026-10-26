@@ -1,0 +1,4 @@
+# Shell scripts and git hooks must keep LF line endings, or bash refuses them on Windows clones.
+*.sh text eol=lf
+.githooks/* text eol=lf
+*.command text eol=lf

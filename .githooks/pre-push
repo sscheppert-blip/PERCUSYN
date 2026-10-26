@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Runs the credential / local-data scan before every push.
+# Enable once per clone: git config core.hooksPath .githooks
+set -euo pipefail
+
+scanner="$(git rev-parse --show-toplevel)/tools/check-sensitive-data.sh"
+zero=0000000000000000000000000000000000000000
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    # nothing to send, or a branch is being deleted
+    [[ -z "${local_sha:-}" || "$local_sha" == "$zero" ]] && continue
+
+    if [[ "$remote_sha" == "$zero" ]] || ! git cat-file -e "$remote_sha^{commit}" 2>/dev/null; then
+        # new branch, or history the local clone doesn't know: scan every tracked file
+        "$scanner"
+    else
+        # only the files this push changes
+        "$scanner" "$remote_sha" "$local_sha"
+    fi
+done
