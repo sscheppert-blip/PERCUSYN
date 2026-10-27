@@ -13,7 +13,7 @@ Nine-voice percussion synthesizer: Closed Hat, Open Hat, Snare, Tom, Shaker, Cla
 - **Presets contain everything:** sounds, patterns, sequencer settings, FX and mixer. Six factory kits, user presets, JSON import/export (compatible with the browser mockup's format).
 - Freely scalable editor in the approved hardware design: graphite and brushed metal, orange/blue LED rings (blue for times), orange seven-segment values, English tooltips.
 
-**Manual:** [English](docs/Manual.md) · [Deutsch](docs/Handbuch.md)
+**Manual:** [English](docs/Manual.md) · [Deutsch](docs/Handbuch.md) · **Schnellstart (German quick start):** [docs/Schnellstart.md](docs/Schnellstart.md)
 
 ![PERCUSYN SYNTH page](docs/images/synth.png)
 
